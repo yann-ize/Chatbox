@@ -25,51 +25,24 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    let ws = null;
-    let reconnectTimeout = null;
+    // Connexion WebSocket
+    const ws = new WebSocket("ws://localhost:8080/ws");
 
-    const connectWebSocket = () => {
-      ws = new WebSocket("ws://localhost:8080/ws");
-
-      ws.onopen = () => {
-        console.log("WebSocket connected");
-        // Envoyer les informations d'authentification si nécessaire
-        if (username) {
-          ws.send(JSON.stringify({
-            type: "auth",
-            username: username
-          }));
-        }
-      };
-
-      ws.onmessage = (event) => {
-        const message = JSON.parse(event.data);
-        setMessages((prevMessages) => [...prevMessages, message]);
-      };
-
-      ws.onerror = (error) => {
-        console.error("WebSocket error:", error);
-      };
-
-      ws.onclose = () => {
-        console.log("WebSocket disconnected");
-        // Tenter de se reconnecter après 5 secondes
-        reconnectTimeout = setTimeout(connectWebSocket, 5000);
-      };
+    ws.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      setMessages((prevMessages) => [...prevMessages, message]);
     };
 
-    connectWebSocket();
-
-    // Nettoyage lors du démontage du composant
-    return () => {
-      if (ws) {
-        ws.close();
-      }
-      if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout);
-      }
+    ws.onerror = (error) => {
+      console.error("WebSocket error:", error);
     };
-  }, [username]);
+
+    ws.onclose = () => {
+      console.log("WebSocket disconnected");
+    };
+
+    return () => ws.close();
+  }, []);
 
   useEffect(() => {
     const fetchOnlineUsers = async () => {
@@ -98,7 +71,8 @@ const Dashboard = () => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
-    if (ws) {
+    const ws = new WebSocket("ws://localhost:8080/ws");
+    ws.onopen = () => {
       ws.send(
         JSON.stringify({
           type: "message",
@@ -107,7 +81,7 @@ const Dashboard = () => {
         })
       );
       setNewMessage("");
-    }
+    };
   };
 
   const handleLogout = () => {

@@ -25,24 +25,51 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Connexion WebSocket
-    const ws = new WebSocket("ws://localhost:8080/ws");
+    let ws = null;
+    let reconnectTimeout = null;
 
-    ws.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      setMessages((prevMessages) => [...prevMessages, message]);
+    const connectWebSocket = () => {
+      ws = new WebSocket("ws://localhost:8080/ws");
+
+      ws.onopen = () => {
+        console.log("WebSocket connected");
+        // Envoyer les informations d'authentification si nécessaire
+        if (username) {
+          ws.send(JSON.stringify({
+            type: "auth",
+            username: username
+          }));
+        }
+      };
+
+      ws.onmessage = (event) => {
+        const message = JSON.parse(event.data);
+        setMessages((prevMessages) => [...prevMessages, message]);
+      };
+
+      ws.onerror = (error) => {
+        console.error("WebSocket error:", error);
+      };
+
+      ws.onclose = () => {
+        console.log("WebSocket disconnected");
+        // Tenter de se reconnecter après 5 secondes
+        reconnectTimeout = setTimeout(connectWebSocket, 5000);
+      };
     };
 
-    ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
-    };
+    connectWebSocket();
 
-    ws.onclose = () => {
-      console.log("WebSocket disconnected");
+    // Nettoyage lors du démontage du composant
+    return () => {
+      if (ws) {
+        ws.close();
+      }
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
     };
-
-    return () => ws.close();
-  }, []);
+  }, [username]);
 
   useEffect(() => {
     const fetchOnlineUsers = async () => {
@@ -71,8 +98,7 @@ const Dashboard = () => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
-    const ws = new WebSocket("ws://localhost:8080/ws");
-    ws.onopen = () => {
+    if (ws) {
       ws.send(
         JSON.stringify({
           type: "message",
@@ -81,7 +107,7 @@ const Dashboard = () => {
         })
       );
       setNewMessage("");
-    };
+    }
   };
 
   const handleLogout = () => {
@@ -170,18 +196,12 @@ const Dashboard = () => {
               connectedUsers.map((user, index) => (
                 <ListItem key={index}>
                   <ListItemAvatar>
-                    {user.profile_picture ? (
-                      // Si une URL d'image est disponible, utilisez-la
-                      <Avatar
-                        src={user.profile_picture}
-                        sx={{ width: 40, height: 40 }}
-                      />
-                    ) : (
-                      // Sinon, affiche une initiale
-                      <Avatar sx={{ backgroundColor: "#4caf50" }}>
-                        {user.username.charAt(0).toUpperCase()}
-                      </Avatar>
-                    )}
+                    <Avatar
+                      sx={{ width: 40, height: 40, backgroundColor: "#4caf50" }}
+                      src={user.profile_picture || null}
+                    >
+                      {!user.profile_picture && user.username.charAt(0).toUpperCase()}
+                    </Avatar>
                   </ListItemAvatar>
                   <ListItemText primary={user.username} sx={{ color: "#fff" }} />
                 </ListItem>
@@ -219,7 +239,7 @@ const Dashboard = () => {
                   }}
                 >
                   <Avatar
-                    sx={{ margin: "0 10px" }}
+                    sx={{ margin: "0 10px", backgroundColor: "#4caf50" }}
                     src={msg.profile_picture || null}
                   >
                     {!msg.profile_picture && msg.username.charAt(0).toUpperCase()}

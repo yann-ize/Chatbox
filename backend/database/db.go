@@ -11,7 +11,7 @@ var DB *sql.DB
 
 func InitDB() {
 	var err error
-	dsn := "root:@tcp(127.0.0.1:3306)/chatbox"
+	dsn := "root:root@tcp(127.0.0.1:3306)/chatbox"
 	DB, err = sql.Open("mysql", dsn)
 	if err != nil {
 		log.Fatal("Unable to connect to the database:", err)

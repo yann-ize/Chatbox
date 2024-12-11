@@ -29,10 +29,9 @@ const Dashboard = () => {
     const ws = new WebSocket("ws://localhost:8080/ws");
 
     ws.onmessage = (event) => {
-        console.log("Données WebSocket reçues :", event.data); // Devrait inclure profile_picture
-        const message = JSON.parse(event.data);
-        setMessages((prevMessages) => [...prevMessages, message]);
-      };              
+      const message = JSON.parse(event.data);
+      setMessages((prevMessages) => [...prevMessages, message]);
+    };
 
     ws.onerror = (error) => {
       console.error("WebSocket error:", error);
@@ -59,14 +58,14 @@ const Dashboard = () => {
         console.error("Erreur réseau :", error);
       }
     };
-  
+
     fetchOnlineUsers();
-  
+
     // Actualise la liste toutes les 5 secondes
     const interval = setInterval(fetchOnlineUsers, 5000);
-  
+
     return () => clearInterval(interval);
-  }, []);  
+  }, []);
 
   const handleSendMessage = (e) => {
     e.preventDefault();
@@ -127,19 +126,19 @@ const Dashboard = () => {
           Bienvenue {username}
         </Typography>
         <Box>
-        <Button
+          <Button
             variant="outlined"
             startIcon={<AccountCircleIcon />}
             sx={{
-                color: "#fff",
-                borderColor: "#fff",
-                marginRight: "10px",
-                "&:hover": { backgroundColor: "#1565c0", borderColor: "#1565c0" },
+              color: "#fff",
+              borderColor: "#fff",
+              marginRight: "10px",
+              "&:hover": { backgroundColor: "#1565c0", borderColor: "#1565c0" },
             }}
             onClick={() => window.location.href = "/edit"} // Redirige vers la page /edit
-            >
+          >
             Modifier Profil
-        </Button>
+          </Button>
           <Button
             variant="contained"
             startIcon={<ExitToAppIcon />}
@@ -167,31 +166,30 @@ const Dashboard = () => {
             Utilisateurs connectés
           </Typography>
           <List>
-  {connectedUsers.length > 0 ? (
-    connectedUsers.map((user, index) => (
-      <ListItem key={index}>
-        <ListItemAvatar>
-          {user.profile_picture ? (
-            // Si une URL d'image est disponible, utilisez-la
-            <Avatar
-              src={user.profile_picture}
-              sx={{ width: 40, height: 40 }}
-            />
-          ) : (
-            // Sinon, affiche une initiale
-            <Avatar sx={{ backgroundColor: "#4caf50" }}>
-              {user.username.charAt(0).toUpperCase()}
-            </Avatar>
-          )}
-        </ListItemAvatar>
-        <ListItemText primary={user.username} sx={{ color: "#fff" }} />
-      </ListItem>
-    ))
-  ) : (
-    <Typography>Aucun utilisateur connecté.</Typography>
-  )}
-</List>
-
+            {connectedUsers.length > 0 ? (
+              connectedUsers.map((user, index) => (
+                <ListItem key={index}>
+                  <ListItemAvatar>
+                    {user.profile_picture ? (
+                      // Si une URL d'image est disponible, utilisez-la
+                      <Avatar
+                        src={user.profile_picture}
+                        sx={{ width: 40, height: 40 }}
+                      />
+                    ) : (
+                      // Sinon, affiche une initiale
+                      <Avatar sx={{ backgroundColor: "#4caf50" }}>
+                        {user.username.charAt(0).toUpperCase()}
+                      </Avatar>
+                    )}
+                  </ListItemAvatar>
+                  <ListItemText primary={user.username} sx={{ color: "#fff" }} />
+                </ListItem>
+              ))
+            ) : (
+              <Typography>Aucun utilisateur connecté.</Typography>
+            )}
+          </List>
         </Grid>
 
         {/* Chatbox */}
@@ -201,50 +199,47 @@ const Dashboard = () => {
           sx={{ padding: "20px", display: "flex", flexDirection: "column" }}
         >
           <Paper
-  sx={{
-    flex: 1,
-    backgroundColor: "#0d2a4a",
-    overflowY: "auto",
-    borderRadius: "10px",
-    padding: "10px",
-  }}
->
-  {messages.length > 0 ? (
-    messages.map((msg, index) => (
-      <Box
-        key={index}
-        sx={{
-          display: "flex",
-          flexDirection: msg.username === username ? "row-reverse" : "row",
-          alignItems: "center",
-          marginBottom: "10px",
-        }}
-      >
-        <Avatar
-  sx={{ margin: "0 10px" }}
-  src={msg.profile_picture || "https://via.placeholder.com/40"} // Image par défaut
->
-  {!msg.profile_picture && msg.username.charAt(0).toUpperCase()} {/* Initiale */}
-</Avatar>
-
-
-        <Box sx={{ maxWidth: "70%" }}>
-          <Typography sx={{ fontWeight: "bold", color: "#81c784" }}>
-            {msg.username}
-          </Typography>
-          <Typography sx={{ color: "#fff" }}>{msg.message}</Typography>
-        </Box>
-      </Box>
-    ))
-  ) : (
-    <Typography
-      sx={{ textAlign: "center", marginTop: "20px", color: "#90caf9" }}
-    >
-      Aucun message pour le moment.
-    </Typography>
-  )}
-</Paper>
-
+            sx={{
+              flex: 1,
+              backgroundColor: "#0d2a4a",
+              overflowY: "auto",
+              borderRadius: "10px",
+              padding: "10px",
+            }}
+          >
+            {messages.length > 0 ? (
+              messages.map((msg, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    display: "flex",
+                    flexDirection: msg.username === username ? "row-reverse" : "row",
+                    alignItems: "center",
+                    marginBottom: "10px",
+                  }}
+                >
+                  <Avatar
+                    sx={{ margin: "0 10px" }}
+                    src={msg.profile_picture || null}
+                  >
+                    {!msg.profile_picture && msg.username.charAt(0).toUpperCase()}
+                  </Avatar>
+                  <Box sx={{ maxWidth: "70%" }}>
+                    <Typography sx={{ fontWeight: "bold", color: "#81c784" }}>
+                      {msg.username}
+                    </Typography>
+                    <Typography sx={{ color: "#fff" }}>{msg.message}</Typography>
+                  </Box>
+                </Box>
+              ))
+            ) : (
+              <Typography
+                sx={{ textAlign: "center", marginTop: "20px", color: "#90caf9" }}
+              >
+                Aucun message pour le moment.
+              </Typography>
+            )}
+          </Paper>
 
           {/* Message Input */}
           <form

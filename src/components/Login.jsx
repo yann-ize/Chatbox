@@ -37,13 +37,11 @@ const Login = () => {
   return (
     <Box
       sx={{
-        height: "100vh",
-        backgroundColor: "#073b69", // Bleu sombre
+        minHeight: "100vh",
+        backgroundColor: "#073b69",
         display: "flex",
-        justifyContent: "center",
         alignItems: "center",
-        position: "relative", // Permet de positionner l'image en dehors
-        color: "#fff",
+        justifyContent: "center",
       }}
     >
       {/* Logo */}
@@ -53,11 +51,11 @@ const Login = () => {
         alt="Chatbox Logo"
         sx={{
           position: "absolute",
-          top: "5%", // Ajuste la distance depuis le haut
+          top: "5%",
           left: "54%",
-          transform: "translate(-50%, 0)", // Centrage horizontal parfait
-          width: "900px", // Largeur du logo
-          height: "auto", // Maintenir les proportions
+          transform: "translate(-50%, 0)",
+          width: "900px",
+          height: "auto",
         }}
       />
 
@@ -71,7 +69,7 @@ const Login = () => {
             backgroundColor: "#0d2a4a",
             color: "#fff",
             textAlign: "center",
-            marginTop: "120px", // Ajout pour l'alignement sous le logo
+            marginTop: "180px",
           }}
         >
           <Box component="form" onSubmit={handleSubmit}>

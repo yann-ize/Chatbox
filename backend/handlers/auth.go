@@ -1,12 +1,13 @@
 package handlers
 
 import (
+	"backend/database"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
-	"backend/database"
+
 	"github.com/golang-jwt/jwt/v4"
 )
 
@@ -137,7 +138,7 @@ func GetOnlineUsers(w http.ResponseWriter, r *http.Request) {
 		var username, profilePicture string
 		rows.Scan(&username, &profilePicture)
 		onlineUsers = append(onlineUsers, map[string]string{
-			"username":       username,
+			"username":        username,
 			"profile_picture": profilePicture,
 		})
 	}
@@ -146,12 +147,12 @@ func GetOnlineUsers(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(onlineUsers)
 }
 
-
 // UpdateProfile permet de mettre à jour le profil d'un utilisateur
 func UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	var payload struct {
 		Username        string `json:"username"`
 		NewUsername     string `json:"newUsername,omitempty"`
+		OldPassword     string `json:"oldPassword,omitempty"`
 		NewPassword     string `json:"newPassword,omitempty"`
 		ConfirmPassword string `json:"confirmPassword,omitempty"`
 		ProfilePicture  string `json:"profilePicture,omitempty"` // Base64 ou URL de l'image
@@ -166,7 +167,8 @@ func UpdateProfile(w http.ResponseWriter, r *http.Request) {
 
 	// Vérifie si l'utilisateur existe
 	var currentUsername string
-	err = database.DB.QueryRow("SELECT username FROM users WHERE username = ?", payload.Username).Scan(&currentUsername)
+	var storedPassword string
+	err = database.DB.QueryRow("SELECT username, password FROM users WHERE username = ?", payload.Username).Scan(&currentUsername, &storedPassword)
 	if err != nil {
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
@@ -183,21 +185,33 @@ func UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Mise à jour du mot de passe
-	if payload.NewPassword != "" && payload.NewPassword == payload.ConfirmPassword {
-		hashedPassword := fmt.Sprintf("%x", sha256.Sum256([]byte(payload.NewPassword)))
-		_, err := database.DB.Exec("UPDATE users SET password = ? WHERE username = ?", hashedPassword, payload.Username)
-		if err != nil {
-			http.Error(w, "Error updating password", http.StatusInternalServerError)
+	if payload.NewPassword != "" {
+		// Vérifier l'ancien mot de passe
+		if payload.OldPassword == "" {
+			http.Error(w, "Old password is required", http.StatusBadRequest)
 			return
 		}
-	} else if payload.NewPassword != "" && payload.NewPassword != payload.ConfirmPassword {
-		http.Error(w, "Password confirmation does not match", http.StatusBadRequest)
-		return
+		hashedOldPassword := fmt.Sprintf("%x", sha256.Sum256([]byte(payload.OldPassword)))
+		if hashedOldPassword != storedPassword {
+			http.Error(w, "Invalid old password", http.StatusUnauthorized)
+			return
+		}
+
+		if payload.NewPassword == payload.ConfirmPassword {
+			hashedPassword := fmt.Sprintf("%x", sha256.Sum256([]byte(payload.NewPassword)))
+			_, err := database.DB.Exec("UPDATE users SET password = ? WHERE username = ?", hashedPassword, payload.Username)
+			if err != nil {
+				http.Error(w, "Error updating password", http.StatusInternalServerError)
+				return
+			}
+		} else {
+			http.Error(w, "Password confirmation does not match", http.StatusBadRequest)
+			return
+		}
 	}
 
 	// Mise à jour de la photo de profil
 	if payload.ProfilePicture != "" {
-		// Exemple : Stocker la photo de profil comme une URL dans la base
 		_, err := database.DB.Exec("UPDATE users SET profile_picture = ? WHERE username = ?", payload.ProfilePicture, payload.Username)
 		if err != nil {
 			http.Error(w, "Error updating profile picture", http.StatusInternalServerError)

@@ -45,12 +45,11 @@ const Register = () => {
   return (
     <Box
       sx={{
-        height: "100vh",
-        backgroundColor: "#073b69", // Bleu sombre
+        minHeight: "100vh",
+        backgroundColor: "#073b69",
         display: "flex",
-        justifyContent: "center",
         alignItems: "center",
-        color: "#fff",
+        justifyContent: "center",
       }}
     >
       {/* Logo */}
@@ -60,13 +59,15 @@ const Register = () => {
         alt="Chatbox Logo"
         sx={{
           position: "absolute",
-          top: "5%", // Ajuste la distance depuis le haut
+          top: "5%",
           left: "54%",
-          transform: "translate(-50%, 0)", // Centrage horizontal parfait
-          width: "900px", // Largeur du logo
-          height: "auto", // Maintenir les proportions
+          transform: "translate(-50%, 0)",
+          width: "900px",
+          height: "auto",
         }}
       />
+
+      {/* Formulaire */}
       <Container maxWidth="xs">
         <Paper
           elevation={5}
